@@ -21,13 +21,13 @@ var score = 0;
 var scoreText;
 
 function preload (){
-    this.load.image('sky', 'assets/sky.png');
-    this.load.image('ground', 'assets/platform.png');
+    this.load.image('background', 'assets/background.png');
+    this.load.image('ground', 'assets/ground.png');
     this.load.image('star', 'assets/star.png');
     this.load.image('bomb', 'assets/bomb.png');
-    this.load.spritesheet('dude', 
-        'assets/dude.png',
-        { frameWidth: 32, frameHeight: 48 }
+    this.load.spritesheet('woof', 
+        'assets/woof.png',
+        { frameWidth: 32, frameHeight: 32 }
     );
 }
 
@@ -39,7 +39,7 @@ var bombs;
 function create (){
 
     //Background
-    this.add.image(400, 300, 'sky');
+    this.add.image(400, 300, 'background');
 
     //Platforms
     platforms = this.physics.add.staticGroup();
@@ -49,26 +49,26 @@ function create (){
     platforms.create(750, 220, 'ground')
 
     //Player
-    player = this.physics.add.sprite(100, 450, 'dude');
+    player = this.physics.add.sprite(100, 450, 'woof');
     player.setBounce(0.2);
     player.setCollideWorldBounds(true);
 
     this.anims.create({
         key: 'left',
-        frames: this.anims.generateFrameNumbers('dude', {start: 0, end: 3}),
+        frames: this.anims.generateFrameNumbers('woof', {start: 0, end: 1}),
         frameRate: 10,
         repeat: -1
     });
 
     this.anims.create({
         key: 'turn',
-        frames: [ { key: 'dude', frame: 4 } ],
-        frameRate: 20
+        frames: [ { key: 'woof', frame: 2 } ],
+        frameRate: 10
     });
     
     this.anims.create({
         key: 'right',
-        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+        frames: this.anims.generateFrameNumbers('woof', { start: 2, end: 3}),
         frameRate: 10,
         repeat: -1
     });
@@ -89,7 +89,8 @@ function create (){
     bombs = this.physics.add.group();
 
     //Score
-    scoreText = this.add.text(16, 16, 'score: 0', {fontSize: '32px', fill: '#000'});
+    scoreText = this.add.text(
+        16, 16, 'score: 0', {fontSize: '32px', fill: '#ffffff'});
 
     //Colliders
     this.physics.add.collider(player, platforms);
@@ -100,33 +101,27 @@ function create (){
     //Overlaps
     this.physics.add.overlap(player, stars, collectStar, null, this);
 
-    //Keyboard setup
-    cursors = this.input.keyboard.createCursorKeys();
+    this.input.mouse.disableContextMenu();
 }
 
 function update (){
-    if (cursors.left.isDown)
-    {
-        player.setVelocityX(-160);
+    var pointer = this.input.activePointer;
 
+    if (pointer.leftButtonDown() && pointer.worldX < 400) {
+        player.setVelocityX(-160);
         player.anims.play('left', true);
     }
-    else if (cursors.right.isDown)
-    {
+    else if (pointer.leftButtonDown() && pointer.worldX > 400) {
         player.setVelocityX(160);
-
         player.anims.play('right', true);
     }
-    else
-    {
-        player.setVelocityX(0);
-
-        player.anims.play('turn');
-    }
-
-    if (cursors.up.isDown && player.body.touching.down)
-    {
+    if (pointer.leftButtonDown() && pointer.worldY < 300 && 
+    player.body.touching.down) {
         player.setVelocityY(-330);
+    }
+    if (!pointer.isDown) {
+        player.setVelocityX(0);
+        player.anims.play('turn');
     }
 }
 
@@ -148,7 +143,8 @@ function collectStar (player, star)
 
         });
 
-        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+        var x = (player.x < 400) ? Phaser.Math.Between(400, 800) :
+            Phaser.Math.Between(0, 400);
 
         var bomb = bombs.create(x, 16, 'bomb');
         bomb.setBounce(1);
