@@ -23,18 +23,24 @@ var scoreText;
 function preload (){
     this.load.image('background', 'assets/background.png');
     this.load.image('ground', 'assets/ground.png');
-    this.load.image('star', 'assets/star.png');
-    this.load.image('bomb', 'assets/bomb.png');
-    this.load.spritesheet('woof', 
-        'assets/woof.png',
+    this.load.spritesheet('enemie', 
+        'assets/enemie.png',
+        { frameWidth: 32, frameHeight: 32 }
+    );
+    this.load.spritesheet('apple',
+        'assets/apple.png',
+        { frameWidth: 32 , frameHeight: 32 }
+    );
+    this.load.spritesheet('leaf', 
+        'assets/leaf.png',
         { frameWidth: 32, frameHeight: 32 }
     );
 }
 
 var player;
 var platforms;
-var cursors;
-var bombs;
+var apples;
+var enemies;
 
 function create (){
 
@@ -44,49 +50,48 @@ function create (){
     //Platforms
     platforms = this.physics.add.staticGroup();
     platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-    platforms.create(600, 400, 'ground');
-    platforms.create(50, 250, 'ground');
-    platforms.create(750, 220, 'ground')
+    platforms.create(600, 350, 'ground');
+    platforms.create(50, 280, 'ground');
+    platforms.create(400, 450, 'ground');
+    platforms.create(750, 240, 'ground');
 
     //Player
-    player = this.physics.add.sprite(100, 450, 'woof');
+    player = this.physics.add.sprite(100, 450, 'leaf');
     player.setBounce(0.2);
     player.setCollideWorldBounds(true);
 
     this.anims.create({
         key: 'left',
-        frames: this.anims.generateFrameNumbers('woof', {start: 0, end: 1}),
+        frames: this.anims.generateFrameNumbers('leaf', {start: 0, end: 2}),
         frameRate: 10,
         repeat: -1
     });
 
     this.anims.create({
         key: 'turn',
-        frames: [ { key: 'woof', frame: 2 } ],
+        frames: [ { key: 'leaf', frame: 0 } ],
         frameRate: 10
     });
     
     this.anims.create({
         key: 'right',
-        frames: this.anims.generateFrameNumbers('woof', { start: 2, end: 3}),
+        frames: this.anims.generateFrameNumbers('leaf', { start: 0, end: 2}),
         frameRate: 10,
         repeat: -1
     });
 
-    //Stars
-    stars = this.physics.add.group({
-        key: 'star',
+    //Apples
+    apples = this.physics.add.group({
+        key: 'apple',        
         repeat: 11,
         setXY: { x: 12, y: 0, stepX: 70 }
     });
 
-    stars.children.iterate(function (child) {
-
+    apples.children.iterate(function (child) {
         child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-    
     });
 
-    bombs = this.physics.add.group();
+    enemies = this.physics.add.group();
 
     //Score
     scoreText = this.add.text(
@@ -94,12 +99,12 @@ function create (){
 
     //Colliders
     this.physics.add.collider(player, platforms);
-    this.physics.add.collider(stars, platforms);
-    this.physics.add.collider(bombs, platforms);
-    this.physics.add.collider(player, bombs, hitBomb, null, this);
+    this.physics.add.collider(apples, platforms);
+    this.physics.add.collider(enemies, platforms);
+    this.physics.add.collider(player, enemies, hitEnemies, null, this);
 
     //Overlaps
-    this.physics.add.overlap(player, stars, collectStar, null, this);
+    this.physics.add.overlap(player, apples, collectApples, null, this);
 
     this.input.mouse.disableContextMenu();
 }
@@ -125,19 +130,18 @@ function update (){
     }
 }
 
-function collectStar (player, star)
+function collectApples (player, apple)
 {
-    star.disableBody(true, true);
+    apple.disableBody(true, true);
 
     score += 10;
     scoreText.setText('Score: ' + score);
 
-    console.log(stars.countActive)
 
-    //Realese bombs
-    if (stars.countActive(true) === 0)
+    //Realese Enemies
+    if (apples.countActive(true) === 0)
     {
-        stars.children.iterate(function (child) {
+        apples.children.iterate(function (child) {
 
             child.enableBody(true, child.x, 0, true, true);
 
@@ -146,15 +150,15 @@ function collectStar (player, star)
         var x = (player.x < 400) ? Phaser.Math.Between(400, 800) :
             Phaser.Math.Between(0, 400);
 
-        var bomb = bombs.create(x, 16, 'bomb');
-        bomb.setBounce(1);
-        bomb.setCollideWorldBounds(true);
-        bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
-        bomb.allowGravity = false;
+        var enemie = enemies.create(x, 16, 'enemie');
+        enemie.setBounce(1);
+        enemie.setCollideWorldBounds(true);
+        enemie.setVelocity(Phaser.Math.Between(-200, 200), 20);
+        enemie.allowGravity = false;
     }
 }
 
-function hitBomb(player, bomb){
+function hitEnemies(player, enemie){
     this.physics.pause();
     player.setTint(0xff0000);
     player.anims.play('turn');
